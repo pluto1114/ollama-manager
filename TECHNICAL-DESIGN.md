@@ -2,7 +2,15 @@
 
 ## 1. 功能概述
 
-本设计旨在完善Ollama Manager的模型下载功能，通过集成`https://ollama.com/search`的模型信息，提供更丰富的模型选择和下载体验。
+本设计旨在完善Ollama Manager的仪表盘模块和模型下载功能，通过集成`https://ollama.com/search`的模型信息，提供更丰富的模型选择和下载体验，同时增强仪表盘的系统监控和数据展示能力。
+
+### 1.1 仪表盘模块功能增强
+
+本次更新将重点完善以下仪表盘功能：
+1. **运行中模型统计** - 实时显示正在运行的模型数量
+2. **最近使用模型** - 记录并展示用户最近使用的模型
+3. **系统资源监控** - 展示CPU、内存、GPU、磁盘等系统资源使用情况
+4. **实时数据刷新** - 所有监控数据自动刷新，提供实时体验
 
 ## 2. 技术架构
 
@@ -153,9 +161,148 @@ interface DownloadProgress {
 3. **性能影响**: 实现客户端和服务器端缓存
 4. **API变更风险**: 实现错误处理和降级机制
 
-## 8. 预期效果
+## 3. 仪表盘模块详细设计
 
+### 3.1 前端设计
+
+#### 3.1.1 组件结构
+
+```
+DashboardPage
+├── StatsCards (统计卡片区域)
+│   ├── OllamaServiceCard
+│   ├── InstalledModelsCard
+│   ├── TotalStorageCard
+│   └── RunningModelsCard
+├── RecentModelsSection (最近使用模型)
+└── SystemResourcesSection (系统资源监控)
+    ├── CpuUsageCard
+    ├── MemoryUsageCard
+    ├── DiskUsageCard
+    └── GpuUsageCard
+```
+
+#### 3.1.2 状态管理
+
+- 使用 React Query 进行数据获取和缓存
+- 使用 localStorage 存储最近使用模型记录
+- 关键数据每 5 秒自动刷新
+
+#### 3.1.3 最近使用模型实现
+
+```typescript
+interface RecentModel {
+  name: string;
+  lastUsed: number; // timestamp
+  useCount: number;
+}
+
+// 记录模型使用
+function recordModelUsage(modelName: string) {
+  const recentModels = getRecentModels();
+  const existing = recentModels.find(m => m.name === modelName);
+  
+  if (existing) {
+    existing.lastUsed = Date.now();
+    existing.useCount++;
+  } else {
+    recentModels.unshift({
+      name: modelName,
+      lastUsed: Date.now(),
+      useCount: 1
+    });
+  }
+  
+  // 只保留最近10个
+  localStorage.setItem('recentModels', JSON.stringify(recentModels.slice(0, 10)));
+}
+```
+
+### 3.2 系统资源监控
+
+#### 3.2.1 后端 API 端点
+
+| 端点 | 方法 | 功能 | 响应 |
+|------|------|------|------|
+| `/api/metrics` | GET | 获取完整指标数据 | `{ system: SystemMetrics, ollama: OllamaMetrics, timestamp }` |
+| `/api/metrics/system` | GET | 仅获取系统指标 | `SystemMetrics` |
+| `/api/metrics/ollama` | GET | 仅获取 Ollama 指标 | `OllamaMetrics` |
+
+#### 3.2.2 数据类型
+
+```typescript
+interface SystemMetrics {
+  cpu: { usage: number; cores: number };
+  memory: { total: number; used: number; free: number; usage: number };
+  disk: { total: number; used: number; free: number; usage: number };
+  disks: DiskInfo[];
+  network: { bytesSent: number; bytesReceived: number };
+  gpu: GpuInfo[];
+  uptime: number;
+}
+
+interface DiskInfo {
+  name: string;
+  mount: string;
+  total: number;
+  used: number;
+  free: number;
+  usage: number;
+}
+
+interface GpuInfo {
+  name: string;
+  usage: number;
+  memoryTotal: number;
+  memoryUsed: number;
+  memoryUsage: number;
+}
+
+interface OllamaMetrics {
+  runningModels: number;
+  totalModels: number;
+  status: string;
+  responseTime: number;
+}
+```
+
+### 3.3 国际化支持
+
+新增翻译键：
+- `dashboard.cpuUsage`: CPU 使用率
+- `dashboard.memoryUsage`: 内存使用率
+- `dashboard.diskUsage`: 磁盘使用率
+- `dashboard.gpuUsage`: GPU 使用率
+- `dashboard.cores`: 核心
+- `dashboard.used`: 已使用
+- `dashboard.free`: 空闲
+- `dashboard.total`: 总计
+- `dashboard.uptime`: 运行时间
+- `dashboard.lastUsed`: 最后使用
+- `dashboard.useCount`: 使用次数
+- `dashboard.noRecentModels`: 暂无最近使用的模型
+
+## 4. 实现计划
+
+### 4.1 仪表盘模块实现
+
+1. ✅ 后端已实现 metrics 相关 API
+2. 🔄 前端实现运行中模型统计
+3. 🔄 前端实现最近使用模型功能
+4. 🔄 前端实现系统资源监控展示
+5. 🔄 更新国际化文件
+6. 🔄 完整功能测试
+
+## 5. 预期效果
+
+### 5.1 模型下载功能
 1. 用户可以浏览和搜索 `https://ollama.com/search` 上的所有模型
 2. 用户可以查看模型详情和版本信息
 3. 用户可以直接从界面下载模型
 4. 系统性能和用户体验得到提升
+
+### 5.2 仪表盘功能
+1. 用户可以实时查看 Ollama 服务状态和运行中模型数量
+2. 用户可以快速访问最近使用的模型
+3. 用户可以监控系统资源使用情况（CPU、内存、GPU、磁盘）
+4. 所有数据自动刷新，提供流畅的用户体验

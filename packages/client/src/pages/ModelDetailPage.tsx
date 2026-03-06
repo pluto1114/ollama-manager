@@ -7,13 +7,14 @@ import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { recordModelUsage } from './DashboardPage';
 
 export function ModelDetailPage() {
   const { t } = useTranslation();
   const { modelName } = useParams<{ modelName: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'logs' | 'config'>('logs');
 
   useEffect(() => {
@@ -22,6 +23,12 @@ export function ModelDetailPage() {
       setActiveTab('config');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (modelName) {
+      recordModelUsage(modelName);
+    }
+  }, [modelName]);
 
   if (!modelName) {
     return (

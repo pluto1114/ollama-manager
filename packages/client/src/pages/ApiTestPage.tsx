@@ -4,6 +4,7 @@ import { Send, Bot, User, Code, Terminal } from 'lucide-react';
 import { api } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
+import { recordModelUsage } from './DashboardPage';
 
 export function ApiTestPage() {
   const [selectedModel, setSelectedModel] = useState('');
@@ -32,6 +33,7 @@ export function ApiTestPage() {
 
   const handleGenerate = () => {
     if (!selectedModel || !prompt) return;
+    recordModelUsage(selectedModel);
     generateMutation.mutate({
       model: selectedModel,
       prompt,

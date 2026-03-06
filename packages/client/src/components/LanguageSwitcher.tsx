@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { Languages } from 'lucide-react';
 import { Button } from './ui/Button';
 
 export function LanguageSwitcher() {

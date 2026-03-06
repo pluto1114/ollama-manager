@@ -42,7 +42,7 @@ function formatDate(dateString: string) {
 }
 
 export function ModelsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
