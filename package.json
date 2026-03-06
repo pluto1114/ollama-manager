@@ -1,0 +1,18 @@
+{
+  "name": "ollama-manager",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run dev -w @ollama-manager/server",
+    "dev:client": "npm run dev -w @ollama-manager/client",
+    "build": "npm run build -w @ollama-manager/server && npm run build -w @ollama-manager/client",
+    "start": "npm run start -w @ollama-manager/server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
